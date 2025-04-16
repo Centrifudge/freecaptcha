@@ -2,6 +2,7 @@ This is a FOSS Captcha generator designed for websites not using any JavaScript 
 
 Suggestions welcome. As of right now this is a very hacky solution.
 
+A simple test page is at your service if you would like to see what the CAPTACHAs look like.
 
 Usage:
 
