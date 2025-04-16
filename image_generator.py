@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 import math
 import pyvista as pv
-#import noise_adder
+import noise_adder
 import random
 from PIL import Image
 
 
 # Configuration constants.
 OUTPUT_FILE = "captcha.png"
-RETURN_MODE_SAVE_FILE = True
-RETURN_MODE_HTTP = False
+RETURN_MODE_SAVE_FILE = 0
+RETURN_MODE_HTTP = 1
+RETURN_MODE_RETURN = 2
 HTTP_ENDPOINT = "localhost:3456"
 CELL_SPACING = 1.0  # Distance between centers of grid cells.
 SHAPE_SIZE = 1.0    # Size of each 3D shape.
@@ -100,25 +101,6 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
     #pl.show(screenshot=output_file)
     #print(f"Scene rendered and saved to {output_file}")
 
-def sample_scene():
-    """
-    Creates and returns a sample 10x10 scene.
-    Empty string '' means no shape in that cell.
-    """
-    # [0][0] is the furthest item
-    # [0] is the rightmost row, low indexes being further back
-    return [
-        ["diamond", "square", "square", "", "triangle", "", "diamond", "", "circle", ""],
-        ["square", "square", "", "triangle", "", "diamond", "", "circle", "", "square"],
-        ["", "triangle", "circle", "", "square", "", "diamond", "circle", "triangle", ""],
-        ["diamond", "", "triangle", "circle", "", "square", "", "triangle", "circle", "diamond"],
-        ["circle", "square", "", "diamond", "triangle", "", "circle", "square", "", "triangle"],
-        ["triangle", "", "diamond", "circle", "", "square", "triangle", "", "diamond", "circle"],
-        ["", "diamond", "circle", "", "triangle", "square", "", "diamond", "circle", "triangle"],
-        ["square", "triangle", "", "diamond", "circle", "", "square", "triangle", "", "diamond"],
-        ["diamond", "", "circle", "tri/home/melchior/Documents/Git/freecaptcha/captcha.pngangle", "", "diamond", "circle", "", "square", "triangle"],
-        ["circle", "diamond", "triangle", "", "circle", "square", "", "diamond", "triangle", "circle"]
-    ]
 
 
 def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RETURN_MODE_SAVE_FILE):
@@ -144,13 +126,16 @@ def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RE
             grid[i][j] = random.choice(shapes)
     
     render = render_scene(grid)
+    render = noise_adder.add_noise(render)
+
+    if return_mode == RETURN_MODE_RETURN:
+        return render
     if return_mode == RETURN_MODE_SAVE_FILE:
         render.save(OUTPUT_FILE)
+        return
     else:
         pass
 
 
 if __name__ == "__main__":
-    #scene = sample_scene()
-    #render_scene(scene, "output.png", camera_offset=(0, 0, 0))
-    generate_captcha(10)
+    generate_captcha(9)

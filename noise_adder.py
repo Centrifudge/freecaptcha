@@ -28,6 +28,3 @@ def add_noise(image, lines = 30, dots = 20000, rotation = 0, blur = 1.2):
     image = image.filter(ImageFilter.GaussianBlur(radius=blur))
 
     return image
-
-# Example usage
-add_noise('output.png', 'noisy.png')
