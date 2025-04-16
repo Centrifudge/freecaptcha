@@ -6,7 +6,7 @@ The challenge is simple: name the farthest away shape on the image.
 
 Suggestions are welcome. As of right now this is a very hacky solution.
 
-A simple test page is at your service if you would like to see what the CAPTACHAs look like.
+A simple test page is at your service if you would like to see what the CAPTCHAs look like.
 
 Usage:
 
