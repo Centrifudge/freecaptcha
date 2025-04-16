@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 import math
 import pyvista as pv
-import noise_adder
+#import noise_adder
+import random
+from PIL import Image
 
 
 # Configuration constants.
+OUTPUT_FILE = "captcha.png"
+RETURN_MODE_SAVE_FILE = True
+RETURN_MODE_HTTP = False
+HTTP_ENDPOINT = "localhost:3456"
 CELL_SPACING = 1.0  # Distance between centers of grid cells.
 SHAPE_SIZE = 1.0    # Size of each 3D shape.
 GRID_SIZE = 10      # 10x10 grid.
@@ -45,7 +51,7 @@ def get_shape_mesh(shape_name, size=SHAPE_SIZE):
     mesh.translate((0, 0, -zmin), inplace=True)
     return mesh
 
-def render_scene(scene, output_file, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE):
+def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE):
     """
     Given a 2D array 'scene' (expected to be GRID_SIZE x GRID_SIZE) of shape names,
     this function creates a PyVista Plotter, places each shape at its grid location,
@@ -90,8 +96,9 @@ def render_scene(scene, output_file, camera_offset = (0, 0, 0), camera_rotation 
     pl.set_background("white")
 
     # Render the scene off-screen and save a screenshot.
-    pl.show(screenshot=output_file)
-    print(f"Scene rendered and saved to {output_file}")
+    return Image.fromarray(pl.screenshot(return_img = True))
+    #pl.show(screenshot=output_file)
+    #print(f"Scene rendered and saved to {output_file}")
 
 def sample_scene():
     """
@@ -101,23 +108,49 @@ def sample_scene():
     # [0][0] is the furthest item
     # [0] is the rightmost row, low indexes being further back
     return [
-        ["triangle", "", "square", "", "triangle", "", "diamond", "", "circle", ""],
-        ["square", "circle", "", "triangle", "", "diamond", "", "circle", "", "square"],
+        ["diamond", "square", "square", "", "triangle", "", "diamond", "", "circle", ""],
+        ["square", "square", "", "triangle", "", "diamond", "", "circle", "", "square"],
         ["", "triangle", "circle", "", "square", "", "diamond", "circle", "triangle", ""],
         ["diamond", "", "triangle", "circle", "", "square", "", "triangle", "circle", "diamond"],
         ["circle", "square", "", "diamond", "triangle", "", "circle", "square", "", "triangle"],
         ["triangle", "", "diamond", "circle", "", "square", "triangle", "", "diamond", "circle"],
         ["", "diamond", "circle", "", "triangle", "square", "", "diamond", "circle", "triangle"],
         ["square", "triangle", "", "diamond", "circle", "", "square", "triangle", "", "diamond"],
-        ["diamond", "", "circle", "triangle", "", "diamond", "circle", "", "square", "triangle"],
+        ["diamond", "", "circle", "tri/home/melchior/Documents/Git/freecaptcha/captcha.pngangle", "", "diamond", "circle", "", "square", "triangle"],
         ["circle", "diamond", "triangle", "", "circle", "square", "", "diamond", "triangle", "circle"]
     ]
 
 
-def create_captcha(grid_size: int, noise_level: int):
+def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RETURN_MODE_SAVE_FILE):
+    shapes = ["circle", "square", "triangle", "diamond", ""]
+    legal_final_corner_shapes = ["circle", "square", "triangle", "diamond"]
+    legal_answer_shapes = ["circle", "square", "triangle", "diamond", ""]
+    
+    global GRID_SIZE
+    GRID_SIZE = grid_size
 
+    grid = [["" for x in range(grid_size)] for y in range(grid_size)]
+
+    grid[0][0] = random.choice(legal_answer_shapes)
+    grid[0][1] = random.choice(legal_final_corner_shapes)
+    grid[1][1] = random.choice(legal_final_corner_shapes)
+    grid[1][0] = random.choice(legal_final_corner_shapes)
+    
+    for i in range(2, grid_size):
+        for j in range(grid_size):
+            grid[i][j] = random.choice(shapes)
+    for i in range(0, 2):
+        for j in range(2, grid_size):
+            grid[i][j] = random.choice(shapes)
+    
+    render = render_scene(grid)
+    if return_mode == RETURN_MODE_SAVE_FILE:
+        render.save(OUTPUT_FILE)
+    else:
+        pass
 
 
 if __name__ == "__main__":
-    scene = sample_scene()
-    render_scene(scene, "output.png", camera_offset=(0, 0, 0))
+    #scene = sample_scene()
+    #render_scene(scene, "output.png", camera_offset=(0, 0, 0))
+    generate_captcha(10)
