@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import math
 import pyvista as pv
+import noise_adder
+
 
 # Configuration constants.
-CELL_SPACING = 2.0  # Distance between centers of grid cells.
+CELL_SPACING = 1.0  # Distance between centers of grid cells.
 SHAPE_SIZE = 1.0    # Size of each 3D shape.
 GRID_SIZE = 10      # 10x10 grid.
 
@@ -43,20 +45,20 @@ def get_shape_mesh(shape_name, size=SHAPE_SIZE):
     mesh.translate((0, 0, -zmin), inplace=True)
     return mesh
 
-def render_scene(scene, output_file, cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE):
+def render_scene(scene, output_file, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE):
     """
     Given a 2D array 'scene' (expected to be GRID_SIZE x GRID_SIZE) of shape names,
     this function creates a PyVista Plotter, places each shape at its grid location,
     sets an off-screen camera, and then saves the rendered view to 'output_file'.
     """
     pl = pv.Plotter(off_screen=True, window_size=(1200, 800))
-    n = len(scene)  # Expecting n = GRID_SIZE.
+
 
     # Place each shape at a location on the x-y plane.
     # (Here we use x for column and y for row. The negative sign for y makes
     # row 0 at the top, similar to array indexing.)
-    for row in range(n):
-        for col in range(n):
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
             shape_name = scene[row][col]
             if shape_name:
                 mesh = get_shape_mesh(shape_name, size=shape_size)
@@ -69,20 +71,20 @@ def render_scene(scene, output_file, cell_spacing=CELL_SPACING, shape_size=SHAPE
                     pl.add_mesh(mesh, color="lightblue", show_edges=True)
 
     # Optionally, add a ground plane for context.
-    total_width = (n - 1) * cell_spacing
+    total_width = (GRID_SIZE - 1) * cell_spacing
     ground = pv.Plane(center=(total_width/2, -total_width/2, 0),
                       direction=(0, 0, 1),
                       i_size=total_width + cell_spacing,
                       j_size=total_width + cell_spacing)
-    pl.add_mesh(ground, color="lightgray", opacity=0.5)
+    pl.add_mesh(ground, color="red", opacity=0.5)
 
     # Determine a central point for the grid.
     center = (total_width/2, -total_width/2, 0)
 
     # Set up a camera position at an angle that nicely shows the grid.
     # Here we position the camera by offsetting along x, y, and z.
-    cam_pos = (center[0] + n, center[1] - n, n * 1.5)
-    pl.camera_position = [cam_pos, center, (0, 0, 1)]
+    cam_pos = (center[0] + GRID_SIZE + camera_offset[0], center[1] - GRID_SIZE + camera_offset[1], GRID_SIZE * 0.5  + camera_offset[2])
+    pl.camera_position = [cam_pos, center, camera_rotation]
 
     # Set a white background.
     pl.set_background("white")
@@ -96,8 +98,10 @@ def sample_scene():
     Creates and returns a sample 10x10 scene.
     Empty string '' means no shape in that cell.
     """
+    # [0][0] is the furthest item
+    # [0] is the rightmost row, low indexes being further back
     return [
-        ["circle", "", "square", "", "triangle", "", "diamond", "", "circle", ""],
+        ["triangle", "", "square", "", "triangle", "", "diamond", "", "circle", ""],
         ["square", "circle", "", "triangle", "", "diamond", "", "circle", "", "square"],
         ["", "triangle", "circle", "", "square", "", "diamond", "circle", "triangle", ""],
         ["diamond", "", "triangle", "circle", "", "square", "", "triangle", "circle", "diamond"],
@@ -109,6 +113,11 @@ def sample_scene():
         ["circle", "diamond", "triangle", "", "circle", "square", "", "diamond", "triangle", "circle"]
     ]
 
+
+def create_captcha(grid_size: int, noise_level: int):
+
+
+
 if __name__ == "__main__":
     scene = sample_scene()
-    render_scene(scene, "output.png")
+    render_scene(scene, "output.png", camera_offset=(0, 0, 0))
