@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import math
 import pyvista as pv
 import noise_adder
@@ -6,7 +5,6 @@ import random
 from PIL import Image
 
 
-# Configuration constants.
 OUTPUT_FILE = r"captcha_{solution}.png"
 RETURN_MODE_SAVE_FILE = 0
 # RETURN_MODE_HTTP = 1
@@ -52,17 +50,8 @@ def get_shape_mesh(shape_name, size=SHAPE_SIZE):
     return mesh
 
 def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE):
-    """
-    Given a 2D array 'scene' (expected to be GRID_SIZE x GRID_SIZE) of shape names,
-    this function creates a PyVista Plotter, places each shape at its grid location,
-    sets an off-screen camera, and then saves the rendered view to 'output_file'.
-    """
     pl = pv.Plotter(off_screen=True, window_size=(300, 200))
 
-
-    # Place each shape at a location on the x-y plane.
-    # (Here we use x for column and y for row. The negative sign for y makes
-    # row 0 at the top, similar to array indexing.)
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             shape_name = scene[row][col]
@@ -95,10 +84,8 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
     # Set a white background.
     pl.set_background("white")
 
-    # Render the scene off-screen and save a screenshot.
+    # Render the scene off-screen and return it
     return Image.fromarray(pl.screenshot(return_img = True))
-    #pl.show(screenshot=output_file)
-    #print(f"Scene rendered and saved to {output_file}")
 
 
 

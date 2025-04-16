@@ -28,7 +28,7 @@ def serve_test_page():
 
       <script>
         async function loadCaptcha() {
-          const response = await fetch('/new_captcha?grid_size=10&noise_level=3');
+          const response = await fetch('/new_captcha?grid_size=10&noise_level=3&return_mode=file');
           const data = await response.json();
           document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.captcha_image;
           document.getElementById('captchaAnswer').textContent = data.answer;
