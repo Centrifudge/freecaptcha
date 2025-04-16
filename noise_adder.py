@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import numpy as np
 import random
 
-def add_noise(image, lines = 30, dots = 20000, rotation = 0, blur = 1.2):
+def add_noise(image, lines = 30, dots = 1500, rotation = 0, blur = 0.6):
     # Load image
     #image = Image.open(image_path).convert('RGB')
     draw = ImageDraw.Draw(image)

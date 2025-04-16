@@ -7,11 +7,10 @@ from PIL import Image
 
 
 # Configuration constants.
-OUTPUT_FILE = "captcha.png"
+OUTPUT_FILE = r"captcha_{solution}.png"
 RETURN_MODE_SAVE_FILE = 0
-RETURN_MODE_HTTP = 1
+# RETURN_MODE_HTTP = 1
 RETURN_MODE_RETURN = 2
-HTTP_ENDPOINT = "localhost:3456"
 CELL_SPACING = 1.0  # Distance between centers of grid cells.
 SHAPE_SIZE = 1.0    # Size of each 3D shape.
 GRID_SIZE = 10      # 10x10 grid.
@@ -58,7 +57,7 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
     this function creates a PyVista Plotter, places each shape at its grid location,
     sets an off-screen camera, and then saves the rendered view to 'output_file'.
     """
-    pl = pv.Plotter(off_screen=True, window_size=(1200, 800))
+    pl = pv.Plotter(off_screen=True, window_size=(300, 200))
 
 
     # Place each shape at a location on the x-y plane.
@@ -90,7 +89,7 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
 
     # Set up a camera position at an angle that nicely shows the grid.
     # Here we position the camera by offsetting along x, y, and z.
-    cam_pos = (center[0] + GRID_SIZE + camera_offset[0], center[1] - GRID_SIZE + camera_offset[1], GRID_SIZE * 0.5  + camera_offset[2])
+    cam_pos = (center[0] + GRID_SIZE + camera_offset[0], center[1] - GRID_SIZE + camera_offset[1], GRID_SIZE * 0.6  + camera_offset[2])
     pl.camera_position = [cam_pos, center, camera_rotation]
 
     # Set a white background.
@@ -106,14 +105,14 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
 def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RETURN_MODE_SAVE_FILE):
     shapes = ["circle", "square", "triangle", "diamond", ""]
     legal_final_corner_shapes = ["circle", "square", "triangle", "diamond"]
-    legal_answer_shapes = ["circle", "square", "triangle", "diamond", ""]
+    legal_answer_shapes = ["circle", "square", "triangle", "diamond"]
     
     global GRID_SIZE
     GRID_SIZE = grid_size
 
     grid = [["" for x in range(grid_size)] for y in range(grid_size)]
 
-    grid[0][0] = random.choice(legal_answer_shapes)
+    solution = grid[0][0] = random.choice(legal_answer_shapes)
     grid[0][1] = random.choice(legal_final_corner_shapes)
     grid[1][1] = random.choice(legal_final_corner_shapes)
     grid[1][0] = random.choice(legal_final_corner_shapes)
@@ -124,18 +123,20 @@ def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RE
     for i in range(0, 2):
         for j in range(2, grid_size):
             grid[i][j] = random.choice(shapes)
-    
-    render = render_scene(grid)
-    render = noise_adder.add_noise(render)
+    if noise_level > 0:
+        render = render_scene(grid, camera_rotation = (random.choice((-1, 1)) * noise_level / 5, 0, 1))
+        noise_args = [10 * noise_level, 500 * noise_level, noise_level, noise_level / 5]
+        render = noise_adder.add_noise(render, *noise_args)
+    else:
+        render = render_scene(grid)
 
     if return_mode == RETURN_MODE_RETURN:
-        return render
+        return render, solution
     if return_mode == RETURN_MODE_SAVE_FILE:
-        render.save(OUTPUT_FILE)
+        render.save(OUTPUT_FILE.replace(r"{solution}", solution))
         return
-    else:
-        pass
+    return
 
 
 if __name__ == "__main__":
-    generate_captcha(9)
+    generate_captcha(10, 3)
