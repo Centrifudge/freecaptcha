@@ -8,6 +8,12 @@ Suggestions are welcome. As of right now this is a very hacky solution.
 
 A simple test page is at your service if you would like to see what the CAPTCHAs look like.
 
+Currently, solutions include:
+    "circle"
+    "square"
+    "triangle"
+    "diamond"
+
 Usage:
 
     HTTP API:
