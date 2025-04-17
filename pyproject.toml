@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-free-captcha"
+version = "0.1.0"
+description = "A zero JavaScript Captcha solution."
+authors = [
+  { name="Centrifudge", email="wladiwarszaw@gmail.com" }
+]
+readme = "README.md"
+license = { text = "MIT" }
+dependencies = ["fastapi", "uvicorn", "pillow", "numpy", "pyvista"]

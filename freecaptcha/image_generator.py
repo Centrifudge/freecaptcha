@@ -1,6 +1,6 @@
 import math
 import pyvista as pv
-import noise_adder
+import freecaptcha.noise_adder as noise_adder
 import random
 from PIL import Image
 

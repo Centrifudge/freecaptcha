@@ -11,7 +11,8 @@ A simple test page is at your service if you would like to see what the CAPTCHAs
 Usage:
 
     HTTP API:
-        Launch the API server (make sur you set the HTTP_PORT to your desired port)
+        Launch the API server (make sur you use your desired port) using:
+            freecaptcha.run_api_server(port)
         Requests are formated as follows:
             [JavaScript]
             fetch('/new_captcha?grid_size=8&noise_level=3&return_mode=http');
@@ -23,6 +24,6 @@ Usage:
             }
     
     Python library:
-        Simply import image_generator and call the following:
+        Simply import freecaptcha and call the following:
             [Python]
-            image, solution = image_generator.generate_captcha(grid_size, noise_level, image_generator.RETURN_MODE_RETURN)
+            image, solution = freecaptcha.generate_captcha(grid_size, noise_level, image_generator.RETURN_MODE_RETURN)

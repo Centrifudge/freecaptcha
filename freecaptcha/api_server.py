@@ -2,11 +2,10 @@ from fastapi import FastAPI, Query, Response
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from io import BytesIO
-import image_generator
+import freecaptcha.image_generator as image_generator
 import base64
 
 
-HTTP_PORT = "8000"
 app = FastAPI()
 
 @app.get("/test_captcha")
@@ -60,6 +59,6 @@ def get_captcha(
         }
 
 
-if __name__ == "__main__":
+def run_api_server(port: int = 8000):
     import uvicorn
-    uvicorn.run("api_server:app", reload=True, port = HTTP_PORT)
+    uvicorn.run("api_server:app", reload=True, port = port)
