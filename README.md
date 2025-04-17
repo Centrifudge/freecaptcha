@@ -32,4 +32,4 @@ Usage:
     Python library:
         Simply import freecaptcha and call the following:
             [Python]
-            image, solution = freecaptcha.generate_captcha(grid_size, noise_level, image_generator.RETURN_MODE_RETURN)
+            image, solution = freecaptcha.generate_captcha(grid_size, noise_level, freecaptcha.RETURN_MODE_RETURN)

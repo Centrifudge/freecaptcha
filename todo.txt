@@ -1,3 +1,2 @@
-Adjust shape sizes when using smaller grids.
 Add a watermark.
-Add versioning.
+Make decoy backgrounds not just be squares.

@@ -12,6 +12,8 @@ RETURN_MODE_RETURN = 2
 CELL_SPACING = 1.0  # Distance between centers of grid cells.
 SHAPE_SIZE = 1.0    # Size of each 3D shape.
 GRID_SIZE = 10      # 10x10 grid.
+shapes = ["circle", "square", "triangle", "diamond", ""]
+non_empty_shapes = ["circle", "square", "triangle", "diamond"]
 
 def get_shape_mesh(shape_name, size=SHAPE_SIZE):
     """
@@ -49,7 +51,7 @@ def get_shape_mesh(shape_name, size=SHAPE_SIZE):
     mesh.translate((0, 0, -zmin), inplace=True)
     return mesh
 
-def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE):
+def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), cell_spacing=CELL_SPACING, shape_size=SHAPE_SIZE, decoy_background: int = 0):
     pl = pv.Plotter(off_screen=True, window_size=(300, 200))
 
     for row in range(GRID_SIZE):
@@ -61,9 +63,21 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
                     # Compute translation so that each shape is centered in its cell.
                     # The x-coordinate is col*cell_spacing, the y-coordinate is -row*cell_spacing.
                     translation = (col * cell_spacing, -row * cell_spacing, 0)
-                    mesh.translate(translation, inplace=True)
+                    mesh.translate(translation, inplace = True)
                     # Add the mesh to the scene.
-                    pl.add_mesh(mesh, color="lightblue", show_edges=True)
+                    pl.add_mesh(mesh, color = "lightblue", show_edges = True)
+            
+            if decoy_background:
+                global non_empty_shapes
+                for i in range(- GRID_SIZE // 2, GRID_SIZE // 2):
+                    for j in range(GRID_SIZE // 4):
+                        # Left side
+                        translation = (- 5 * cell_spacing, + 5 * cell_spacing * i, j * (shape_size * 2 + cell_spacing))
+                        pl.add_mesh(get_shape_mesh(random.choice(non_empty_shapes), shape_size * 2).translate(translation), color = "lightblue", show_edges = True)
+                        
+                        # Right side
+                        translation = (- 5 * cell_spacing * i, + 5 * cell_spacing, j * (shape_size * 2 + cell_spacing))
+                        pl.add_mesh(get_shape_mesh(random.choice(non_empty_shapes), shape_size * 2).translate(translation), color = "lightblue", show_edges = True)
 
     # Optionally, add a ground plane for context.
     total_width = (GRID_SIZE - 1) * cell_spacing
@@ -90,7 +104,7 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
 
 
 def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RETURN_MODE_SAVE_FILE):
-    shapes = ["circle", "square", "triangle", "diamond", ""]
+    global shapes
     legal_final_corner_shapes = ["circle", "square", "triangle", "diamond"]
     legal_answer_shapes = ["circle", "square", "triangle", "diamond"]
     
@@ -111,7 +125,7 @@ def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RE
         for j in range(2, grid_size):
             grid[i][j] = random.choice(shapes)
     if noise_level > 0:
-        render = render_scene(grid, camera_rotation = (random.choice((-1, 1)) * noise_level / 5, 0, 1))
+        render = render_scene(grid, camera_rotation = (random.choice((-1, 1)) * noise_level / 5, 0, 1), decoy_background = noise_level)
         noise_args = [10 * noise_level, 500 * noise_level, noise_level, noise_level / 5]
         render = noise_adder.add_noise(render, *noise_args)
     else:

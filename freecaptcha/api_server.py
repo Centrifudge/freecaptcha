@@ -8,7 +8,7 @@ import base64
 
 app = FastAPI()
 
-@app.get("/test_captcha")
+@app.get("/test")
 def serve_test_page():
     return Response(content="""
     <!DOCTYPE html>

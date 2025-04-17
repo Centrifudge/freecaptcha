@@ -2,3 +2,8 @@ __pycache__/
 dist/
 py_free_captcha.egg-info/
 test.py
+test/
+freecaptcha/test.py
+freecaptcha/__pycache__
+captcha*
+output.png
