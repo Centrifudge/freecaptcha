@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query, Response
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from io import BytesIO
-import freecaptcha.image_generator as image_generator
+from .image_generator import generate_captcha, RETURN_MODE_RETURN, RETURN_MODE_SAVE_FILE
 import base64
 
 
@@ -44,10 +44,10 @@ def get_captcha(
     return_mode: str = Query("http"), # Could also be file
 ):
     if return_mode == "file":
-        image_generator.generate_captcha(grid_size, noise_level, image_generator.RETURN_MODE_SAVE_FILE)
+        generate_captcha(grid_size, noise_level, RETURN_MODE_SAVE_FILE)
         return 200
     else:
-        image, solution = image_generator.generate_captcha(grid_size, noise_level, image_generator.RETURN_MODE_RETURN)
+        image, solution = generate_captcha(grid_size, noise_level, RETURN_MODE_RETURN)
         buf = BytesIO()
         image.save(buf, format="PNG")
         img_bytes = buf.getvalue()
