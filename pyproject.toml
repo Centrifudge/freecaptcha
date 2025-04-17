@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "py-free-captcha"
-version = "0.1.0"
+version = "0.1.2"
 description = "A zero JavaScript Captcha solution."
 authors = [
   { name="Centrifudge", email="wladiwarszaw@gmail.com" }
