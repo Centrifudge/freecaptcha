@@ -61,4 +61,4 @@ def get_captcha(
 
 def run_api_server(port: int = 8000):
     import uvicorn
-    uvicorn.run("api_server:app", reload=True, port = port)
+    uvicorn.run("freecaptcha.api_server:app", reload=True, port = port)
