@@ -7,3 +7,4 @@ freecaptcha/test.py
 freecaptcha/__pycache__
 captcha*
 output.png
+*.key

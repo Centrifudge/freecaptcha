@@ -1,41 +1,73 @@
-from fastapi import FastAPI, Query, Response
+from fastapi import FastAPI, Query, Response, Form
 from fastapi.responses import StreamingResponse, HTMLResponse
 from typing import Optional
 from io import BytesIO
-from .image_generator import generate_captcha, RETURN_MODE_RETURN, RETURN_MODE_SAVE_FILE
+from freecaptcha.image_generator import generate_captcha, RETURN_MODE_RETURN, RETURN_MODE_SAVE_FILE
 import base64
 import datetime
+import os
+from datetime import datetime, timedelta
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import serialization, hashes
 PRIVATE_KEY = None
-PUBLIC_KEY = None
+NONCE_SIZE = 12
 
 
-def get_or_generate_keys(pub_path=None, priv_path=None, size=2048):
-    def load(path, priv=False):
-        try: data = open(path, 'rb').read()
-        except: return None
-        return serialization.load_pem_private_key(data, None) if priv else serialization.load_pem_public_key(data)
+def generate_or_load_key(path = "default_private.key"):
+    if os.path.exists(path):
+        return open(path, "rb").read()
+    key = AESGCM.generate_key(bit_length = 256)
+    with open(path, "wb") as f:
+        f.write(key)
+    return key
 
-    pub, priv = load(pub_path), load(priv_path, True)
-    if not pub or not priv:
-        priv = rsa.generate_private_key(public_exponent=65537, key_size=size)
-        pub = priv.public_key()
-        if priv_path: open(priv_path, 'wb').write(priv.private_bytes(
-            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
-        if pub_path: open(pub_path, 'wb').write(pub.public_bytes(
-            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
-    return pub, priv
 
-def encrypt_data(public_key, data: bytes) -> str:
-    return base64.urlsafe_b64encode(
-        public_key.encrypt(
-            data,
-            padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-        )
-    ).decode()
+def create_secure_cookie_pair(cookie_name: str, key: bytes, data: str, ttl_minutes=5) -> dict:
+    aes = AESGCM(key)
+    global NONCE_SIZE
+    nonce1 = os.urandom(NONCE_SIZE)
+    nonce2 = os.urandom(NONCE_SIZE)
+    salt = base64.urlsafe_b64encode(os.urandom(127)).decode()
+    send_time = datetime.utcnow().isoformat()
+
+    payload1 = f"{send_time}|{ttl_minutes}|{salt}".encode()
+    payload2 = f"{send_time}|{data}".encode()
+
+    encrypted1 = aes.encrypt(nonce1, payload1, None)
+    encrypted2 = aes.encrypt(nonce2, payload2, None)
+
+    return {
+        f"{cookie_name}_time": base64.urlsafe_b64encode(nonce1 + encrypted1).decode(),
+        f"{cookie_name}": base64.urlsafe_b64encode(nonce2 + encrypted2).decode()
+    }
+
+
+
+def read_secure_cookie(cookie_name: str, cookies, key: bytes) -> (bool, str):
+    try:
+        cookie_send_time = cookies[f"{cookie_name}_time"]
+        cookie_name = cookie_name[f"{cookie_name}"]
+        aes = AESGCM(key)
+        ct1 = base64.urlsafe_b64decode(cookie_send_time)
+        ct2 = base64.urlsafe_b64decode(cookie_answer)
+
+        global NONCE_SIZE
+        nonce1, encrypted1 = ct1[:NONCE_SIZE], ct1[NONCE_SIZE:]
+        nonce2, encrypted2 = ct2[:NONCE_SIZE], ct2[NONCE_SIZE:]
+
+        decrypted1 = aes.decrypt(nonce1, encrypted1, None).decode()
+        decrypted2 = aes.decrypt(nonce2, encrypted2, None).decode()
+
+        send_time1, ttl, salt = decrypted1.split("|")
+        send_time2, value = decrypted2.split("|")
+
+        assert send_time1 == send_time2
+        ts = datetime.fromisoformat(send_time1)
+        assert datetime.utcnow() - ts <= timedelta(minutes=ttl)
+
+        return True, value  # Cookie recognised
+    except Exception as e:
+        return False, str(e)
 
 
 def decrypt_data(private_key, encrypted: str) -> str:
@@ -75,13 +107,20 @@ def get_captcha(
             "answer": solution
         }
 
+@app.get("/check_captcha_passed_cookie_validity")
+def http_check_captcha(
+  captcha_passed_time: str = Query(),
+  captcha_passed: str = Query()
+):
+  return str(is_captcha_complete({cookie.split("=")[0]: cookie.split("=")[1] for cookie in (captcha_passed_time, captcha_passed)})).lower()
+
 @app.get("/embedded_captcha")
-def generate_embeded_captcha(
+def generate_embedded_captcha(
+    response: Response,
     grid_size: int = Query(6, ge=3, le=30),
     noise_level: int = Query(3, ge=0, le=10),
 ):
   global PRIVATE_KEY
-  global PUBLIC_KEY
 
   # CAPTCHA generation
   image, solution = generate_captcha(grid_size, noise_level, RETURN_MODE_RETURN)
@@ -98,39 +137,43 @@ def generate_embeded_captcha(
 
   # Encrypt captcha with send_time + salt (so that the server doesn't have to remember the answer)
   encrypted_answer = encrypt_data(PUBLIC_KEY, f"{captcha}|{send_time}|{salt}".encode())
-  response.set_cookie("Captcha_Send_Time", encrypted_send_time, httponly=True, path="/")
-  response.set_cookie("Captcha_Answer", encrypted_answer, httponly=True, path="/")
+  
+  cookie_pair = create_secure_cookie_pair("captcha_answer", PRIVATE_KEY, solution, 5)
+  for name, value in cookie_pair.items():
+    response.set_cookie(name, value, httponly = True, path = "/")
   with open("embedded_captcha.html", "r") as f:
       return f.read().replace(r"{b64_image}", img_base64)
 
+
 @app.get("/verify_embedded_captcha")
-def verify_captcha():
+def verify_captcha(response: Response, answer: str = Form(...)):
   global PUBLIC_KEY
-  global PRIVATE_KEY
   cookies = request.cookies
   try:
-      decrypted_send_time = decrypt_data(private_key, cookies["Captcha_Send_Time"])
-      decrypted_answer = decrypt_data(private_key, cookies["Captcha_Answer"])
-      
-      send_time, salt = decrypted_send_time.split("|")
-      captcha_value, st2, salt2 = decrypted_answer.split("|")
-
-      # Validate consistency
-      assert send_time == st2
-      assert salt == salt2
-
-      # Check time validity
-      dt = datetime.fromisoformat(send_time)
-      assert (datetime.utcnow() - dt).seconds < 5 * 60  # 5 min expiration
-
-      return {"status": "CAPTCHA passed"}
+      validity, captcha_value = read_secure_cookie("captcha_answer", cookies)
+      if validity:
+        if captcha_value == answer:
+          cookie_pair = create_secure_cookie_pair("captcha_passed", PRIVATE_KEY, "true")
+          for name, value in cookie_pair.items():
+            response.set_cookie(name, value, httponly = True, path = "/")
+          return "Success"
+        else:
+          return "Wrong answer"
+      else:
+        return "Invalid cookie, perhaps it has expired?"
   except Exception as e:
       return {"status": "CAPTCHA failed", "error": str(e)}
 
-def run_api_server(port: int = 8000):
+def is_captcha_complete(cookies: list[str]) -> bool:
   global PRIVATE_KEY
-  global PUBLIC_KEY
-  PRIVATE_KEY = rsa.generate_private_key(public_exponent=65537, key_size=4096)
-  PUBLIC_KEY = private_key.public_key()
+  try:
+    _, value = read_secure_cookie("captcha_passed", cookies, PRIVATE_KEY)
+    return value == "true"
+  except:
+    return False
+
+def run_api_server(port: int = 3333, private_key_file: str = "private.key"):
   import uvicorn
-  uvicorn.run("freecaptcha.api_server:app", reload=True, port = port)
+  global PRIVATE_KEY
+  PRIVATE_KEY = generate_or_load_key(private_key_file)
+  uvicorn.run("freecaptcha.api_server:app", reload=True, port = port, host="localhost")
