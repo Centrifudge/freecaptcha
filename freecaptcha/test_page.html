@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>CAPTCHA Test</title>
+    </head>
+    <body>
+      <h1>CAPTCHA Test</h1>
+      <button onclick="loadCaptcha()">Get New CAPTCHA</button>
+      <div>
+        <img id="captchaImg" alt="CAPTCHA will appear here" style="margin-top: 10px; width:80vw;" />
+      </div>
+      <p>Answer (for testing): <span id="captchaAnswer"></span></p>
+
+      <script>
+        async function loadCaptcha() {
+          const response = await fetch('/new_captcha?grid_size=10&noise_level=3&return_mode=file');
+          const data = await response.json();
+          document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.captcha_image;
+          document.getElementById('captchaAnswer').textContent = data.answer;
+        }
+      </script>
+    </body>
+</html>

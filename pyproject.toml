@@ -11,4 +11,4 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "MIT" }
-dependencies = ["fastapi", "uvicorn", "pillow", "numpy", "pyvista"]
+dependencies = ["fastapi", "uvicorn", "pillow", "numpy", "pyvista", "cryptography"]

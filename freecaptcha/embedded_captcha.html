@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Embedded CAPTCHA</title>
+    </head>
+    <body>
+        <h1>FreeCAPTCHA version 0.3.x</h1>
+        <br>
+        <p>You have 5 minutes to answer.</p>
+        <br>
+        <img id="embedded_captcha_image" src = "data:image/png;base64,{b64_image}" alt="CAPTCHA will appear here." style="margin-top: 10px; width:80vw;" />
+        <form method="GET" action="/verify_embedded_captcha">
+            <label for = "embedded_captcha_answer_circle"></label>
+            <input type="radio" id = "embedded_captcha_answer_circle" name = "answer" value = "circle">
+            <label for = "embedded_captcha_answer_square"></label>
+            <input type="radio" id = "embedded_captcha_answer_square" name = "answer" value = "square">
+            <label for = "embedded_captcha_answer_triangle"></label>
+            <input type="radio" id = "embedded_captcha_answer_triangle" name = "answer" value = "triangle">
+            <label for = "embedded_captcha_answer_diamond"></label>
+            <input type="radio" id = "embedded_captcha_answer_diamond" name = "answer" value = "diamond">
+            <button type="submit">Answer.</button>
+        </form>
+    </body>
+</html>
