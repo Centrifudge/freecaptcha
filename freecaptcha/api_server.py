@@ -60,6 +60,8 @@ def get_captcha(
         }
 
 @app.get("/embedded_captcha")
+def generate_embeded_captcha():
+  pass
 
 def run_api_server(port: int = 8000):
     import uvicorn

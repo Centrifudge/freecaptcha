@@ -1,2 +1,2 @@
 Add a watermark.
-Make decoy backgrounds not just be squares (they are all inside of each other).
+Add an easy to use endpoint for embedding the Captchas.
