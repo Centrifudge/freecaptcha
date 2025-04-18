@@ -6,6 +6,7 @@ from .image_generator import generate_captcha, RETURN_MODE_RETURN, RETURN_MODE_S
 import base64
 
 
+
 app = FastAPI()
 
 @app.get("/test")
@@ -39,7 +40,7 @@ def serve_test_page():
 
 @app.get("/new_captcha")
 def get_captcha(
-    grid_size: int = Query(10, ge=3, le=30),
+    grid_size: int = Query(6, ge=3, le=30),
     noise_level: int = Query(3, ge=0, le=10),
     return_mode: str = Query("http"), # Could also be file
 ):
@@ -58,6 +59,7 @@ def get_captcha(
             "answer": solution
         }
 
+@app.get("/embedded_captcha")
 
 def run_api_server(port: int = 8000):
     import uvicorn

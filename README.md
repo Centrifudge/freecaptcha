@@ -2,7 +2,7 @@
 
 
 This is a FOSS Captcha generator designed for websites not using any JavaScript or WebAssembly.
-The challenge is simple: name the farthest away shape on the image.
+The challenge is simple: "name the farthest away shape on the image that is still on the red plane".
 
 Suggestions are welcome. As of right now this is a very hacky solution.
 

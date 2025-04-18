@@ -67,17 +67,16 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
                     # Add the mesh to the scene.
                     pl.add_mesh(mesh, color = "lightblue", show_edges = True)
             
-            if decoy_background:
-                global non_empty_shapes
-                for i in range(- GRID_SIZE // 2, GRID_SIZE // 2):
-                    for j in range(GRID_SIZE // 4):
-                        # Left side
-                        translation = (- 5 * cell_spacing, + 5 * cell_spacing * i, j * (shape_size * 2 + cell_spacing))
-                        pl.add_mesh(get_shape_mesh(random.choice(non_empty_shapes), shape_size * 2).translate(translation), color = "lightblue", show_edges = True)
-                        
-                        # Right side
-                        translation = (- 5 * cell_spacing * i, + 5 * cell_spacing, j * (shape_size * 2 + cell_spacing))
-                        pl.add_mesh(get_shape_mesh(random.choice(non_empty_shapes), shape_size * 2).translate(translation), color = "lightblue", show_edges = True)
+    if decoy_background:
+        global non_empty_shapes
+        for i in range(- GRID_SIZE // 2, GRID_SIZE // 2):
+            # Left side
+            translation = (- 5 * cell_spacing, + 5 * cell_spacing * i, 0)
+            pl.add_mesh(get_shape_mesh(random.choice(non_empty_shapes), shape_size * 2).translate(translation), color = "lightblue", show_edges = True)
+            
+            # Right side
+            translation = (- 5 * cell_spacing * i, + 5 * cell_spacing, 0)
+            pl.add_mesh(get_shape_mesh(random.choice(non_empty_shapes), shape_size * 2).translate(translation), color = "lightblue", show_edges = True)
 
     # Optionally, add a ground plane for context.
     total_width = (GRID_SIZE - 1) * cell_spacing
@@ -103,7 +102,7 @@ def render_scene(scene, camera_offset = (0, 0, 0), camera_rotation = (0, 0, 1), 
 
 
 
-def generate_captcha(grid_size: int = 10, noise_level: int = 3, return_mode = RETURN_MODE_SAVE_FILE):
+def generate_captcha(grid_size: int = 6, noise_level: int = 3, return_mode = RETURN_MODE_SAVE_FILE):
     global shapes
     legal_final_corner_shapes = ["circle", "square", "triangle", "diamond"]
     legal_answer_shapes = ["circle", "square", "triangle", "diamond"]
