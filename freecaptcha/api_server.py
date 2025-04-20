@@ -46,10 +46,10 @@ def create_secure_cookie_pair(cookie_name: str, key: bytes, data: str, ttl_minut
 def read_secure_cookie(cookie_name: str, cookies, key: bytes) -> (bool, str):
     try:
         cookie_send_time = cookies[f"{cookie_name}_time"]
-        cookie_name = cookie_name[f"{cookie_name}"]
+        cookie_value = cookie_name[f"{cookie_name}"]
         aes = AESGCM(key)
         ct1 = base64.urlsafe_b64decode(cookie_send_time)
-        ct2 = base64.urlsafe_b64decode(cookie_answer)
+        ct2 = base64.urlsafe_b64decode(cookie_value)
 
         global NONCE_SIZE
         nonce1, encrypted1 = ct1[:NONCE_SIZE], ct1[NONCE_SIZE:]
@@ -132,12 +132,8 @@ def generate_embedded_captcha(
   # Security features
   send_time = datetime.utcnow().isoformat()
   salt = base64.urlsafe_b64encode(os.urandom(16)).decode()
-  # Encrypt send time with salt (to make CAPTCHAs expire)
-  encrypted_send_time = encrypt_data(PUBLIC_KEY, f"{send_time}|{salt}".encode())
 
   # Encrypt captcha with send_time + salt (so that the server doesn't have to remember the answer)
-  encrypted_answer = encrypt_data(PUBLIC_KEY, f"{captcha}|{send_time}|{salt}".encode())
-  
   cookie_pair = create_secure_cookie_pair("captcha_answer", PRIVATE_KEY, solution, 5)
   for name, value in cookie_pair.items():
     response.set_cookie(name, value, httponly = True, path = "/")
@@ -147,7 +143,7 @@ def generate_embedded_captcha(
 
 @app.get("/verify_embedded_captcha")
 def verify_captcha(response: Response, answer: str = Form(...)):
-  global PUBLIC_KEY
+  global PRIVATE_KEY
   cookies = request.cookies
   try:
       validity, captcha_value = read_secure_cookie("captcha_answer", cookies)
